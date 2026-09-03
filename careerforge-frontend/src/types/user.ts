@@ -1,6 +1,6 @@
 export type ExperienceLevel = "Fresher" | "Junior" | "Mid";
 
-export type PreferredTrack = "Web Development" | "Data" | "Design" | "Marketing";
+export type PreferredTrack = "Web Development" | "App Development" | "Game Development" | "Software Engineering" | "Machine Learning" | "Data Science" | "UI UX Design" | "Marketing";
 
 export type EducationLevel =
   | "SSC"

@@ -2,8 +2,12 @@ export const EXPERIENCE_LEVELS = ["Fresher", "Junior", "Mid"] as const;
 
 export const PREFERRED_TRACKS = [
   "Web Development",
-  "Data",
-  "Design",
+  "App Development",
+  "Game Development",
+  "Software Engineering",
+  "Machine Learning",
+  "Data Science",
+  "UI UX Design",
   "Marketing",
 ] as const;
 
