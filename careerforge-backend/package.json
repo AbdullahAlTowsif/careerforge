@@ -2,12 +2,14 @@
   "name": "careerforge-backend",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only ./src/server.ts",
+    "dev": "tsx watch ./src/server.ts",
     "build": "tsc",
     "start": "node ./dist/server.js",
+    "seed": "tsx ./seed/runSeed.ts",
     "lint": "npx eslint ./src"
   },
   "keywords": [],
@@ -23,19 +25,24 @@
     "@types/jsonwebtoken": "^9.0.10",
     "eslint": "^10.9.1",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.69.0"
   },
   "dependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^26.4.1",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.4",
+    "morgan": "^1.12.0",
     "zod": "^4.5.4"
   }
 }
