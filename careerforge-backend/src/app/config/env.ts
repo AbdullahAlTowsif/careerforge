@@ -5,11 +5,11 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 export const env = {
   PORT: process.env.PORT || 5000,
-  MONGODB_URI:
-    process.env.MONGODB_URI || "mongodb://localhost:27017/career-platform",
-  JWT_SECRET: process.env.JWT_SECRET || "change-me",
-  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "change-me-too",
+  MONGODB_URI: process.env.MONGODB_URI as string,
+  JWT_SECRET: process.env.JWT_SECRET as string,
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN || "localhost",
+  COOKIE_SECURE: process.env.COOKIE_SECURE === "true",
   REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "",
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",

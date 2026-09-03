@@ -51,6 +51,12 @@ const globalErrorHandler: ErrorRequestHandler = (
 
   if (err instanceof AppError) {
     simplifiedError = handleAppError(err);
+  } else if (err && typeof err.statusCode === "number" && Array.isArray(err.errorSources)) {
+    simplifiedError = {
+      statusCode: err.statusCode,
+      message: err.message || "Something went wrong",
+      errorSources: err.errorSources,
+    };
   } else if (err instanceof mongoose.Error.ValidationError) {
     simplifiedError = handleValidationError(err);
   } else if (err instanceof mongoose.Error.CastError) {
