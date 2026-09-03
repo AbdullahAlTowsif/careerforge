@@ -10,8 +10,8 @@ AI-powered youth employment & career roadmap platform (SDG 8). Monorepo: `career
 |-------|------|------|--------|
 | 1 | 1 | Project scaffolding & infrastructure | Done |
 | 1 | 2 | Auth & User Management | Done |
-| 1 | 3 | Profile & Skills | Not started |
-| 1 | 4 | Seed Jobs & Resources + Pages | Not started |
+| 1 | 3 | Profile & Skills | Done |
+| 1 | 4 | Seed Jobs & Resources + Pages | Done |
 | 1 | 5 | Basic Matching Logic | Not started |
 | 1 | 6 | Dashboard & Navigation | Not started |
 | 1 | 7 | Polish & Documentation | Not started |
@@ -48,7 +48,7 @@ No MongoDB required for Step 1 scaffolding verification (health check at `GET /`
 | `npm run build` | `careerforge-backend/` | Compile TypeScript to `dist/` |
 | `npm run lint` | `careerforge-backend/` | ESLint with typescript-eslint |
 | `npm run lint` | `careerforge-frontend/` | ESLint with eslint-config-next |
-| `npm run seed` | `careerforge-backend/` | Run seed script (Step 4 — currently empty, will fail) |
+| `npm run seed` | `careerforge-backend/` | Run seed script (seeds 21 jobs + 20 resources) |
 
 No test framework is installed. No CI/CD exists.
 
@@ -74,7 +74,7 @@ Next.js proxies `/api/*` → `http://localhost:5000/api/*` via `next.config.ts` 
 ### Auth Model
 
 - JWT access token (15 min) + refresh token (7 days) in **httpOnly cookies**
-- Cookie name: `accessToken` (hardcoded in both `careerforge-backend/src/app/config/jwt.ts` and `careerforge-frontend/src/middleware.ts`)
+- Cookie name: `accessToken` (hardcoded in both `careerforge-backend/src/app/config/cookie.ts` and `careerforge-frontend/src/middleware.ts`)
 - **No global auth store.** Session is the cookie itself.
 - `serverFetch.ts` auto-refreshes on 401, redirects to `/login` if refresh fails
 - Protected routes: `/dashboard`, `/jobs`, `/resources`, `/profile`, `/roadmap` (enforced in `careerforge-frontend/src/middleware.ts`)
@@ -108,21 +108,23 @@ All backend errors follow this shape:
 
 2. **Zod version mismatch.** Backend uses `zod@4`, frontend uses `zod@3`. Schemas are not shareable between packages.
 
-3. **Module folders are mostly empty under `src/app/modules/`.** `auth/` and `user/` are implemented (Step 2). The rest (jobOpportunity, learningResource, jobMatching, roadmap, careerBot, aiApi, payment, upload) are still empty.
+3. **Module folders are mostly empty under `src/app/modules/`.** `auth/` (Step 2) and `user/` (Steps 2–3, fully implemented with controller, service, routes) are done. `jobOpportunity/` and `learningResource/` (Step 4, fully implemented with controller, service, routes, model, validation) are done. The rest (jobMatching, roadmap, careerBot, aiApi, payment, upload) are still empty.
 
-4. **`src/routes/index.ts` wires module routers.** Only the auth router is mounted so far (`/api/auth`). When adding a module, you must import and mount its routes here.
+4. **`src/routes/index.ts` wires module routers.** Auth (`/api/auth`), profile (`/api/profile`), jobs (`/api/jobs`), and resources (`/api/resources`) are all mounted. When adding a module, import and mount its routes here.
 
-5. **Seed script is broken.** `npm run seed` references `tsx ./seed/runSeed.ts` but the `seed/` directory is empty (Step 4).
+5. **Seed script now works.** `npm run seed` runs `tsx ./seed/runSeed.ts` which seeds 21 jobs and 20 resources. Safe to re-run (idempotent).
 
-6. **Frontend homepage is boilerplate.** `src/app/page.tsx` is still the default Next.js "edit page.tsx" placeholder.
+6. **Frontend homepage just redirects.** `src/app/page.tsx` does `redirect("/dashboard")`. The Jobs (`/jobs`) and Resources (`/resources`) pages now exist (Step 4).
 
-7. **`express-session` is in dependencies but unused.** The project uses httpOnly cookies, not session middleware. This can be ignored or removed.
+7. **`express-session` was removed.** It was in dependencies but unused (project uses httpOnly cookies, not session middleware). Cleaned up in Step 4 pre-step cleanup.
 
 8. **`serverFetch` unwraps `{ data }` envelopes.** Backend sends `{ success, message, data }`, but `serverFetch` returns just `data` to the caller.
 
 9. **`serverFetch` only works in browser context.** It calls `redirect()` from `next/navigation` which requires a browser. In future server components, use the fetch wrapper with care or call the API differently.
 
 10. **No `.opencode/specs/` directory yet.** The `create-spec` command references it but it hasn't been created.
+
+11. **Profile update validates wider than it applies.** `updateUserSchema` (`user.validation.ts`) accepts `cvFileUrl` and `avatarUrl`, but `UserServices.updateProfile` only whitelists 8 fields (`fullName`, `educationLevel`, `experienceLevel`, `preferredTrack`, `skills`, `experienceNotes`, `careerInterests`, `cvRawText`). Sending `cvFileUrl`/`avatarUrl` passes validation but has no effect — they are reserved for Phase 2 file uploads.
 
 ## Design System Colors
 
@@ -140,4 +142,8 @@ All mapped as HSL CSS variables in `careerforge-frontend/src/app/globals.css`. C
 
 - `CAREER_FORGE.md` — full build spec, stack, data models, API endpoints, agent rules
 - `docs/project_plan_v1.md` — detailed step-by-step plan with file lists and acceptance criteria
+- `docs/step2_plan.md` — implementation plan for Step 2
+- `docs/step3_plan.md` — implementation plan for Step 3 (includes open-question resolutions)
 - `.opencode/implementation-notes/01-project-scaffolding-infrastructure.md` — what was built in Step 1
+- `.opencode/implementation-notes/02-auth-user-management.md` — what was built in Step 2
+- `.opencode/implementation-notes/03-profile-and-skills.md` — what was built in Step 3 (incl. Postman test guide)
