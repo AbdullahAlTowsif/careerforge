@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { MatchBadge } from "@/components/MatchBadge";
+import { SkillTag } from "@/components/SkillTag";
 import type { Job } from "@/types/job";
 
 const typeVariant: Record<string, "default" | "secondary" | "outline"> = {
@@ -20,15 +22,26 @@ const typeVariant: Record<string, "default" | "secondary" | "outline"> = {
   Freelance: "outline",
 };
 
-export function JobCard({ job }: { job: Job }) {
+interface JobCardProps {
+  job: Job;
+  matchScore?: number;
+  matchedSkills?: string[];
+}
+
+export function JobCard({ job, matchScore, matchedSkills }: JobCardProps) {
+  const matchedSet = new Set(matchedSkills?.map((s) => s.toLowerCase()));
+
   return (
     <Card className="flex flex-col transition-shadow hover:shadow-md">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg leading-tight">{job.title}</CardTitle>
-          <Badge variant={typeVariant[job.type] ?? "outline"} className="shrink-0">
-            {job.type}
-          </Badge>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {matchScore !== undefined && <MatchBadge score={matchScore} />}
+            <Badge variant={typeVariant[job.type] ?? "outline"}>
+              {job.type}
+            </Badge>
+          </div>
         </div>
         <CardDescription className="flex items-center gap-1 text-sm">
           {job.company}
@@ -41,9 +54,11 @@ export function JobCard({ job }: { job: Job }) {
       <CardContent className="flex-1 pb-2">
         <div className="flex flex-wrap gap-1">
           {job.requiredSkills.slice(0, 5).map((skill) => (
-            <Badge key={skill} variant="outline" className="text-xs font-normal">
-              {skill}
-            </Badge>
+            <SkillTag
+              key={skill}
+              skill={skill}
+              matched={matchedSet.size > 0 && matchedSet.has(skill.toLowerCase())}
+            />
           ))}
           {job.requiredSkills.length > 5 && (
             <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
