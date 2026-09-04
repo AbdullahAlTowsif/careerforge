@@ -13,7 +13,7 @@ AI-powered youth employment & career roadmap platform (SDG 8). Monorepo: `career
 | 1 | 3 | Profile & Skills | Done |
 | 1 | 4 | Seed Jobs & Resources + Pages | Done |
 | 1 | 5 | Basic Matching Logic | Done |
-| 1 | 6 | Dashboard & Navigation | Not started |
+| 1 | 6 | Dashboard & Navigation | Done |
 | 1 | 7 | Polish & Documentation | Not started |
 | 2 | 8 | Redis + AI Infrastructure | Not started |
 | 2 | 9–13 | AI features (skill extraction, roadmap, CareerBot, CV assistant, uploads) | Not started |
@@ -108,9 +108,9 @@ All backend errors follow this shape:
 
 2. **Zod version mismatch.** Backend uses `zod@4`, frontend uses `zod@3`. Schemas are not shareable between packages.
 
-3. **Module folders are mostly empty under `src/app/modules/`.** `auth/` (Step 2) and `user/` (Steps 2–3, fully implemented with controller, service, routes) are done. `jobOpportunity/` and `learningResource/` (Step 4, fully implemented with controller, service, routes, model, validation) are done. `jobMatching/` (Step 5) has `interface.ts`, `service.ts`, `controller.ts`, `constant.ts` but no `routes.ts`, `model.ts`, or `validation.ts` — it does NOT have its own router; instead its controller is imported directly by `jobOpportunity.routes.ts` and `learningResource.routes.ts` to handle the `/recommended` endpoints. The rest (roadmap, careerBot, aiApi, payment, upload) are still empty.
+3. **Module folders are mostly empty under `src/app/modules/`.** `auth/` (Step 2) and `user/` (Steps 2–3, fully implemented with controller, service, routes) are done. `jobOpportunity/` and `learningResource/` (Step 4, fully implemented with controller, service, routes, model, validation) are done. `jobMatching/` (Step 5) has `interface.ts`, `service.ts`, `controller.ts`, `constant.ts` but no `routes.ts`, `model.ts`, or `validation.ts` — it does NOT have its own router; instead its controller is imported directly by `jobOpportunity.routes.ts` and `learningResource.routes.ts` to handle the `/recommended` endpoints. `dashboard/` (Step 6) has `interface.ts`, `service.ts`, `controller.ts`, `routes.ts` — aggregation module that imports from `jobMatching` services. The rest (roadmap, careerBot, aiApi, payment, upload) are still empty.
 
-4. **`src/routes/index.ts` wires module routers.** Auth (`/api/auth`), profile (`/api/profile`), jobs (`/api/jobs`), and resources (`/api/resources`) are all mounted. When adding a module, import and mount its routes here.
+4. **`src/routes/index.ts` wires module routers.** Auth (`/api/auth`), profile (`/api/profile`), jobs (`/api/jobs`), resources (`/api/resources`), and dashboard (`/api/dashboard`) are all mounted. When adding a module, import and mount its routes here.
 
 5. **Seed script now works.** `npm run seed` runs `tsx ./seed/runSeed.ts` which seeds 21 jobs and 20 resources. Safe to re-run (idempotent).
 
@@ -122,7 +122,7 @@ All backend errors follow this shape:
 
 9. **`serverFetch` only works in browser context.** It calls `redirect()` from `next/navigation` which requires a browser. In future server components, use the fetch wrapper with care or call the API differently.
 
-10. **No `.opencode/specs/` directory yet.** The `create-spec` command references it but it hasn't been created. However, `.opencode/implementation-notes/` exists with step documentation for Steps 01–05.
+10. **No `.opencode/specs/` directory yet.** The `create-spec` command references it but it hasn't been created. However, `.opencode/implementation-notes/` exists with step documentation for Steps 01–06.
 
 11. **Profile update validates wider than it applies.** `updateUserSchema` (`user.validation.ts`) accepts `cvFileUrl` and `avatarUrl`, but `UserServices.updateProfile` only whitelists 8 fields (`fullName`, `educationLevel`, `experienceLevel`, `preferredTrack`, `skills`, `experienceNotes`, `careerInterests`, `cvRawText`). Sending `cvFileUrl`/`avatarUrl` passes validation but has no effect — they are reserved for Phase 2 file uploads.
 
