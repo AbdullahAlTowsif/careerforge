@@ -23,7 +23,11 @@ const redirectToLogin = () => {
   if (redirectingToLogin) return;
   redirectingToLogin = true;
   if (typeof window !== "undefined") {
-    redirect("/login")
+    const currentPath = window.location.pathname;
+    const loginUrl = currentPath && currentPath !== "/login"
+      ? `/login?from=${encodeURIComponent(currentPath)}`
+      : "/login";
+    redirect(loginUrl);
   }
 };
 

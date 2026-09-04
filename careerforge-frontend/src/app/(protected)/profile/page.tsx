@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { TagInput } from "@/components/TagInput";
+import { TagInput } from "@/components/modules/profile/TagInput";
 import { serverFetch } from "@/lib/serverFetch";
 import {
   profileUpdateSchema,

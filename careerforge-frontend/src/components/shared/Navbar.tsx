@@ -7,7 +7,7 @@ import { Menu, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LogoutButton } from "@/components/LogoutButton";
+import { LogoutButton } from "@/components/modules/auth/LogoutButton";
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },

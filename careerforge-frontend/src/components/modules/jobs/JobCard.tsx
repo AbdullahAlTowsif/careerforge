@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MatchBadge } from "@/components/MatchBadge";
-import { SkillTag } from "@/components/SkillTag";
+import { MatchBadge } from "@/components/modules/jobs/MatchBadge";
+import { SkillTag } from "@/components/shared/SkillTag";
 import type { Job } from "@/types/job";
 
 const typeVariant: Record<string, "default" | "secondary" | "outline"> = {

@@ -53,7 +53,7 @@ Do not introduce other frameworks or databases without explicit instruction.
 
 **Architecture note:** Next.js is the frontend only (App Router, mostly server components for data-fetching pages, client components for interactive/form UI). The Express backend from the modular MVC structure remains a separate API service — Next.js calls it over HTTP rather than reimplementing logic in Next.js API routes/Route Handlers. This keeps the backend reusable and keeps the two build phases (frontend/backend) independently deployable.
 
-**Auth/session note — no client-side store:** there is no Redux/Zustand global store for auth. Session state lives entirely in **httpOnly, Secure cookies** set by the Express backend on login. `frontend/src/lib/serverFetch.ts` is a single fetch wrapper used everywhere (server components, route handlers if any, and client components) that:
+**Auth/session note — no client-side store:** there is no Redux/Zustand global store for auth. Session state lives entirely in **httpOnly, Secure cookies** set by the Express backend on login. `careerforge-frontend/src/lib/serverFetch.ts` is a single fetch wrapper used everywhere (server components, route handlers if any, and client components) that:
 1. Attaches the access-token cookie automatically (browser does this natively for same-origin requests — see the Next.js rewrite proxy note in [Folder Structure](#-folder-structure)).
 2. On a `401`, calls the refresh endpoint once, retries the original request, and only then redirects to `/login` if refresh also fails.
 3. Is the *only* place API calls are made from — no component calls `fetch()` directly.
@@ -116,7 +116,7 @@ Used for: CV file uploads (Phase 2 skill extraction from an uploaded document, n
 
 ## 🎨 Design System — CareerForge Color Palette
 
-Defined once as CSS variables in `frontend/src/app/globals.css` (shadcn/ui reads these) and mapped in `tailwind.config` — components should reference the semantic Tailwind tokens (`bg-primary`, `text-foreground`, etc.), not hard-coded hex values.
+Defined once as CSS variables in `careerforge-frontend/src/app/globals.css` (shadcn/ui reads these) and mapped in `@theme inline` — components should reference the semantic Tailwind tokens (`bg-primary`, `text-foreground`, etc.), not hard-coded hex values.
 
 | Role | Color Name | Hex | Usage |
 |---|---|---|---|
@@ -173,7 +173,7 @@ Beyond what's in the stack table — the small utilities you'll actually reach f
 
 ```
 project-root/
-├── backend/
+├── careerforge-backend/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── config/            # db.ts, env.ts, jwt.ts, anthropic.ts, redis.ts, cloudinary.ts, sentry.ts
@@ -264,7 +264,7 @@ project-root/
 │   ├── package.json
 │   ├── package-lock.json
 │   └── tsconfig.json
-├── frontend/                                          # Next.js v16.3.4, App Router
+├── careerforge-frontend/                                          # Next.js v16.3.4, App Router
 │   ├── public/
 │   ├── src/
 │   │   ├── app/
@@ -607,7 +607,7 @@ Only attempt after all core Phase 2 features pass acceptance:
 ## 🔑 Environment Variables
 
 ```env
-# backend/.env
+# careerforge-backend/.env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/career-platform
 JWT_SECRET=change-me
@@ -627,7 +627,7 @@ SENTRY_DSN=
 ```
 
 ```env
-# frontend/.env.local
+# careerforge-frontend/.env.local
 NEXT_PUBLIC_API_URL=http://localhost:5000/api   # used by the Next.js rewrite proxy in next.config.ts, not called directly from components
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SENTRY_DSN=
@@ -642,14 +642,16 @@ NEXT_PUBLIC_SENTRY_DSN=
 docker run -d --name redis -p 6379:6379 redis:7-alpine
 
 # Backend
-cd backend
+cd careerforge-backend
 npm install
+cp .env.example .env
 npm run seed     # seeds jobs + learning resources
 npm run dev       # http://localhost:5000
 
 # Frontend (Next.js)
-cd frontend
+cd ../careerforge-frontend
 npm install
+cp .env.local.example .env.local
 npm run dev       # http://localhost:3000
 ```
 

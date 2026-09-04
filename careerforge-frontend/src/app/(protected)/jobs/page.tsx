@@ -14,8 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { JobCard } from "@/components/JobCard";
-import { SkillTag } from "@/components/SkillTag";
+import { JobCard } from "@/components/modules/jobs/JobCard";
+import { SkillTag } from "@/components/shared/SkillTag";
 import {
   Card,
   CardContent,
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { serverFetch } from "@/lib/serverFetch";
+import { toast } from "sonner";
 import type { Job } from "@/types/job";
 import type { MatchResult, ResourceRecommendation } from "@/types/matching";
 
@@ -62,7 +63,9 @@ export default function JobsPage() {
       .then((data) => {
         if (active) setJobs(data);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (active) toast.error("Failed to load jobs. Please try again.");
+      })
       .finally(() => {
         if (active) setLoading(false);
       });
@@ -94,7 +97,9 @@ export default function JobsPage() {
       .then((data) => {
         if (active) setRecResources(data);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (active) toast.error("Failed to load learning recommendations.");
+      })
       .finally(() => {
         if (active) setResLoading(false);
       });

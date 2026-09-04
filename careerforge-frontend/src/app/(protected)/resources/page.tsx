@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { serverFetch } from "@/lib/serverFetch";
+import { toast } from "sonner";
 import type { LearningResource } from "@/types/resource";
 
 export default function ResourcesPage() {
@@ -35,7 +36,9 @@ export default function ResourcesPage() {
       .then((data) => {
         if (active) setResources(data);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (active) toast.error("Failed to load resources. Please try again.");
+      })
       .finally(() => {
         if (active) setLoading(false);
       });

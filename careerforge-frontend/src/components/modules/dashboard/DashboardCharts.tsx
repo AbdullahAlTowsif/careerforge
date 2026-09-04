@@ -27,12 +27,30 @@ import {
 import type { MatchResult } from "@/types/matching";
 import type { DashboardStats } from "@/types/dashboard";
 
-const CHART_COLORS = {
+const FALLBACK_COLORS = {
   success: "#10B981",
   warning: "#F59E0B",
   destructive: "#EF4444",
   primary: "#0D9488",
-  muted: "#94A3B8",
+  border: "#E2E8F0",
+  mutedForeground: "#64748B",
+} as const;
+
+function cssColor(token: string, fallback: string): string {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(token)
+    .trim();
+  return value || fallback;
+}
+
+const CHART_COLORS = {
+  success: cssColor("--success", FALLBACK_COLORS.success),
+  warning: cssColor("--warning", FALLBACK_COLORS.warning),
+  destructive: cssColor("--destructive", FALLBACK_COLORS.destructive),
+  primary: cssColor("--primary", FALLBACK_COLORS.primary),
+  border: cssColor("--border", FALLBACK_COLORS.border),
+  mutedForeground: cssColor("--muted-foreground", FALLBACK_COLORS.mutedForeground),
 } as const;
 
 function scoreColor(score: number): string {
@@ -107,7 +125,7 @@ export function DashboardCharts({
                     formatter={(value) => [`${value}%`, "Match"]}
                     contentStyle={{
                       borderRadius: 8,
-                      border: "1px solid #E2E8F0",
+                      border: `1px solid ${CHART_COLORS.border}`,
                       fontSize: 12,
                     }}
                   />
@@ -147,7 +165,7 @@ export function DashboardCharts({
                   <Tooltip
                     contentStyle={{
                       borderRadius: 8,
-                      border: "1px solid #E2E8F0",
+                      border: `1px solid ${CHART_COLORS.border}`,
                       fontSize: 12,
                     }}
                   />
@@ -171,10 +189,10 @@ export function DashboardCharts({
             <CardContent>
               <ResponsiveContainer width="100%" height={260}>
                 <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
-                  <PolarGrid stroke="#E2E8F0" />
+                  <PolarGrid stroke={CHART_COLORS.border} />
                   <PolarAngleAxis
                     dataKey="skill"
-                    tick={{ fontSize: 11, fill: "#64748B" }}
+                    tick={{ fontSize: 11, fill: CHART_COLORS.mutedForeground }}
                   />
                   <PolarRadiusAxis
                     tick={false}

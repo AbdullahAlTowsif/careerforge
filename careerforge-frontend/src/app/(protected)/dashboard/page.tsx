@@ -19,10 +19,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SkillTag } from "@/components/SkillTag";
-import { JobCard } from "@/components/JobCard";
-import { DashboardCharts } from "@/components/DashboardCharts";
+import { SkillTag } from "@/components/shared/SkillTag";
+import { JobCard } from "@/components/modules/jobs/JobCard";
+import { DashboardCharts } from "@/components/modules/dashboard/DashboardCharts";
 import { serverFetch } from "@/lib/serverFetch";
+import { toast } from "sonner";
 import type { DashboardData } from "@/types/dashboard";
 
 export default function DashboardPage() {
@@ -35,7 +36,9 @@ export default function DashboardPage() {
       .then((d) => {
         if (active) setData(d);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (active) toast.error("Failed to load your dashboard. Please try again.");
+      })
       .finally(() => {
         if (active) setLoading(false);
       });

@@ -14,7 +14,7 @@ AI-powered youth employment & career roadmap platform (SDG 8). Monorepo: `career
 | 1 | 4 | Seed Jobs & Resources + Pages | Done |
 | 1 | 5 | Basic Matching Logic | Done |
 | 1 | 6 | Dashboard & Navigation | Done |
-| 1 | 7 | Polish & Documentation | Not started |
+| 1 | 7 | Polish & Documentation | Done |
 | 2 | 8 | Redis + AI Infrastructure | Not started |
 | 2 | 9–13 | AI features (skill extraction, roadmap, CareerBot, CV assistant, uploads) | Not started |
 | Bonus | 14–17 | Payments, admin, analytics, i18n | Not started |
@@ -85,6 +85,7 @@ Next.js proxies `/api/*` → `http://localhost:5000/api/*` via `next.config.ts` 
 - **Forms** use React Hook Form + Zod via `@hookform/resolvers/zod`
 - **Server components by default** — only add `'use client'` for forms, interactive widgets, charts
 - **Styling** via Tailwind CSS + shadcn/ui components in `src/components/ui/`
+- **Feature-based component structure** — custom components live under `src/components/` grouped as: `ui/` (shadcn primitives), `shared/` (cross-cutting: `Navbar`, `SkillTag`), and `modules/<feature>/` (feature components: `auth`, `jobs`, `dashboard`, `profile`, `resources`, `resume`, `ai`)
 - **Colors** from CSS variables in `globals.css` only — never raw hex in components
 - **Notifications** via Sonner (`toast.success()`, `toast.error()`) — `<Toaster />` is in root layout
 - **Charts** via Recharts (Step 6 onward)
@@ -122,7 +123,7 @@ All backend errors follow this shape:
 
 9. **`serverFetch` only works in browser context.** It calls `redirect()` from `next/navigation` which requires a browser. In future server components, use the fetch wrapper with care or call the API differently.
 
-10. **No `.opencode/specs/` directory yet.** The `create-spec` command references it but it hasn't been created. However, `.opencode/implementation-notes/` exists with step documentation for Steps 01–06.
+10. **No `.opencode/specs/` directory yet.** The `create-spec` command references it but it hasn't been created. However, `.opencode/implementation-notes/` exists with step documentation for Steps 01–07.
 
 11. **Profile update validates wider than it applies.** `updateUserSchema` (`user.validation.ts`) accepts `cvFileUrl` and `avatarUrl`, but `UserServices.updateProfile` only whitelists 8 fields (`fullName`, `educationLevel`, `experienceLevel`, `preferredTrack`, `skills`, `experienceNotes`, `careerInterests`, `cvRawText`). Sending `cvFileUrl`/`avatarUrl` passes validation but has no effect — they are reserved for Phase 2 file uploads.
 
@@ -146,8 +147,10 @@ All mapped as HSL CSS variables in `careerforge-frontend/src/app/globals.css`. C
 - `docs/step3_plan.md` — implementation plan for Step 3 (includes open-question resolutions)
 - `docs/step4_plan.md` — implementation plan for Step 4
 - `docs/step5_plan.md` — implementation plan for Step 5
+- `docs/step7_plan.md` — implementation plan for Step 7 (incl. components refactor + polish fixes)
 - `.opencode/implementation-notes/01-project-scaffolding-infrastructure.md` — what was built in Step 1
 - `.opencode/implementation-notes/02-auth-user-management.md` — what was built in Step 2
 - `.opencode/implementation-notes/03-profile-and-skills.md` — what was built in Step 3 (incl. Postman test guide)
 - `.opencode/implementation-notes/04-seed-jobs-and-resources.md` — what was built in Step 4
 - `.opencode/implementation-notes/05-basic-matching-logic.md` — what was built in Step 5 (incl. Postman test guide)
+- `.opencode/implementation-notes/07-polish-documentation.md` — what was built in Step 7 (incl. components refactor)
