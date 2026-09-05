@@ -26,10 +26,12 @@ interface JobCardProps {
   job: Job;
   matchScore?: number;
   matchedSkills?: string[];
+  missingSkills?: string[];
 }
 
-export function JobCard({ job, matchScore, matchedSkills }: JobCardProps) {
+export function JobCard({ job, matchScore, matchedSkills, missingSkills }: JobCardProps) {
   const matchedSet = new Set(matchedSkills?.map((s) => s.toLowerCase()));
+  const missingSet = new Set(missingSkills?.map((s) => s.toLowerCase()));
 
   return (
     <Card className="flex flex-col transition-shadow hover:shadow-md">
@@ -58,6 +60,9 @@ export function JobCard({ job, matchScore, matchedSkills }: JobCardProps) {
               key={skill}
               skill={skill}
               matched={matchedSet.size > 0 && matchedSet.has(skill.toLowerCase())}
+              missing={
+                missingSet.size > 0 && missingSet.has(skill.toLowerCase())
+              }
             />
           ))}
           {job.requiredSkills.length > 5 && (

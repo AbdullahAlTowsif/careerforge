@@ -32,7 +32,23 @@ const getRecommendedResources = catchAsync(
   }
 );
 
+const getJobMatch = catchAsync(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user!.userId;
+    const jobId = Array.isArray(req.params.id) ? req.params.id[0]! : req.params.id!;
+    const result = await JobMatchingServices.getJobMatch(userId, jobId);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Job match analysis fetched successfully",
+      data: result,
+    });
+  }
+);
+
 export const JobMatchingController = {
   getRecommendedJobs,
   getRecommendedResources,
+  getJobMatch,
 };

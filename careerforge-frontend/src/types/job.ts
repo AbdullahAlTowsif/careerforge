@@ -20,3 +20,32 @@ export interface Job {
 }
 
 export type JobType = "Internship" | "Part-time" | "Full-time" | "Freelance";
+
+export interface MatchBreakdown {
+  skillOverlap: number;
+  experienceAlignment: number;
+  trackAlignment: number;
+}
+
+export interface LearningLinkResource {
+  _id: string;
+  title: string;
+  platform: string;
+  url: string;
+  cost: "Free" | "Paid";
+}
+
+export interface LearningLink {
+  skill: string;
+  resources: LearningLinkResource[];
+}
+
+export interface JobMatchResult {
+  job: Job;
+  matchPercentage: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  breakdown: MatchBreakdown;
+  reasons: string[];
+  learningLinks: LearningLink[];
+}
