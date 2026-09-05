@@ -11,6 +11,7 @@ export const env = {
   COOKIE_DOMAIN: process.env.COOKIE_DOMAIN || "localhost",
   COOKIE_SECURE: process.env.COOKIE_SECURE === "true",
   REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || "",
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "",
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || "",

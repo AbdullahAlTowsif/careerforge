@@ -15,7 +15,7 @@ AI-powered youth employment & career roadmap platform (SDG 8). Monorepo: `career
 | 1 | 5 | Basic Matching Logic | Done |
 | 1 | 6 | Dashboard & Navigation | Done |
 | 1 | 7 | Polish & Documentation | Done |
-| 2 | 8 | Redis + AI Infrastructure | Not started |
+| 2 | 8 | Redis + AI Infrastructure | Done |
 | 2 | 9–13 | AI features (skill extraction, roadmap, CareerBot, CV assistant, uploads) | Not started |
 | Bonus | 14–17 | Payments, admin, analytics, i18n | Not started |
 
@@ -126,6 +126,10 @@ All backend errors follow this shape:
 10. **No `.opencode/specs/` directory yet.** The `create-spec` command references it but it hasn't been created. However, `.opencode/implementation-notes/` exists with step documentation for Steps 01–07.
 
 11. **Profile update validates wider than it applies.** `updateUserSchema` (`user.validation.ts`) accepts `cvFileUrl` and `avatarUrl`, but `UserServices.updateProfile` only whitelists 8 fields (`fullName`, `educationLevel`, `experienceLevel`, `preferredTrack`, `skills`, `experienceNotes`, `careerInterests`, `cvRawText`). Sending `cvFileUrl`/`avatarUrl` passes validation but has no effect — they are reserved for Phase 2 file uploads.
+
+12. **Redis is optional with graceful degradation.** `src/app/config/redis.ts` never throws on connect failure — the server boots fine without Redis and caching/rate limiting silently disable. `REDIS_URL` uses a plain `redis://` URL (the Redis Cloud `redis-cli` string). `rediss://` (TLS) was tested and FAILS on the current cloud instance. `ioredis@6` needs the named import `{ Redis } from "ioredis"`.
+
+13. **`GEMINI_API_KEY` is empty and may stay empty.** All AI services in `src/app/modules/aiApi/` fall back to dictionary (skill extraction) or template (CV assist) providers when the key is missing — features must keep working keyless. The `aiRateLimiter` middleware exists but is **not mounted** on any route yet (apply it to AI endpoints in Steps 10–12). `scripts/smokeTest.ts` verifies Redis/cache/extraction/rate-limiting end-to-end (it mutates the first user's `extractedSkills`).
 
 ## Design System Colors
 

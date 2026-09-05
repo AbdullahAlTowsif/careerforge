@@ -3,10 +3,12 @@ import mongoose from "mongoose";
 import app from "./app.js";
 import { env } from "./app/config/env.js";
 import { connectDB } from "./app/config/db.js";
+import { connectRedis, disconnectRedis } from "./app/config/redis.js";
 
 async function startServer(): Promise<void> {
   try {
     await connectDB();
+    await connectRedis();
 
     const server: Server = app.listen(env.PORT, () => {
       console.log(`🚀 Server is running on PORT ${env.PORT}`);
@@ -17,6 +19,7 @@ async function startServer(): Promise<void> {
       console.error("Unhandled Rejection detected:", error);
       if (server) {
         server.close(() => {
+          disconnectRedis();
           mongoose.connection.close();
           process.exit(1);
         });
@@ -34,6 +37,7 @@ async function startServer(): Promise<void> {
     const shutdown = () => {
       console.log("Shutting down...");
       server.close(() => {
+        disconnectRedis();
         mongoose.connection.close();
         process.exit(0);
       });
