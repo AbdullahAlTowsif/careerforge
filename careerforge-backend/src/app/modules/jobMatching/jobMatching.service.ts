@@ -4,10 +4,13 @@ import { JobOpportunity } from "../jobOpportunity/jobOpportunity.model.js";
 import { LearningResource } from "../learningResource/learningResource.model.js";
 import AppError from "../../errorHelpers/AppError.js";
 import {
-  ADJACENT_LEVELS,
-  MATCH_WEIGHTS,
-  RELATED_TRACKS,
-} from "./jobMatching.constant.js";
+  normalizeSkill,
+  normalizeSkills,
+  skillsMatch,
+  inferTracksFromSkills,
+  SKILL_TRACK_DOMAINS,
+} from "../../helpers/skillNormalizer.js";
+import { ADJACENT_LEVELS, MATCH_WEIGHTS } from "./jobMatching.constant.js";
 import type {
   ILearningLink,
   IMatchBreakdown,
@@ -15,6 +18,31 @@ import type {
   IJobMatchResult,
   IResourceRecommendation,
 } from "./jobMatching.interface.js";
+
+/* ------------------------------------------------------------------ */
+/*  Dynamic track relation — derived from skill domain mapping          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Two tracks are "related" if they share at least one skill domain.
+ * Computed on-the-fly from SKILL_TRACK_DOMAINS so new tracks/tech
+ * are automatically related without hardcoded RELATED_TRACKS.
+ */
+const computeRelatedTracks = (trackA: string, trackB: string): boolean => {
+  if (trackA === trackB) return true;
+
+  const skillsInA: string[] = [];
+  const skillsInB: string[] = [];
+
+  for (const [skill, domains] of Object.entries(SKILL_TRACK_DOMAINS)) {
+    if (domains.includes(trackA)) skillsInA.push(skill);
+    if (domains.includes(trackB)) skillsInB.push(skill);
+  }
+
+  // Tracks are related if they share ≥ 2 skills
+  const shared = skillsInA.filter((s) => skillsInB.includes(s));
+  return shared.length >= 2;
+};
 
 const computeExperienceAlignment = (
   userLevel: string | undefined,
@@ -26,13 +54,27 @@ const computeExperienceAlignment = (
   return 0;
 };
 
+/**
+ * Track alignment with dynamic inference.
+ * - If the user has no preferred track, infer it from their skills.
+ * - Relation between tracks is computed via shared skill domains, so
+ *   new tech is automatically connected to the right track.
+ */
 const computeTrackAlignment = (
   userTrack: string | undefined,
-  jobTrack: string
+  jobTrack: string,
+  userSkills: string[] = []
 ): number => {
-  if (!userTrack) return 0;
-  if (userTrack === jobTrack) return 100;
-  if ((RELATED_TRACKS[userTrack] ?? []).includes(jobTrack)) return 40;
+  let effectiveTrack = userTrack;
+
+  if (!effectiveTrack) {
+    const inferred = inferTracksFromSkills(userSkills);
+    if (inferred.length > 0) effectiveTrack = inferred[0];
+  }
+
+  if (!effectiveTrack) return 0;
+  if (effectiveTrack === jobTrack) return 100;
+  if (computeRelatedTracks(effectiveTrack, jobTrack)) return 40;
   return 0;
 };
 
@@ -41,13 +83,18 @@ const computeBreakdown = (
   experienceLevel: string | undefined,
   jobExperienceLevel: string,
   preferredTrack: string | undefined,
-  jobTrack: string
+  jobTrack: string,
+  userSkills: string[] = []
 ): IMatchBreakdown => {
   const experienceAlignment = computeExperienceAlignment(
     experienceLevel,
     jobExperienceLevel
   );
-  const trackAlignment = computeTrackAlignment(preferredTrack, jobTrack);
+  const trackAlignment = computeTrackAlignment(
+    preferredTrack,
+    jobTrack,
+    userSkills
+  );
   return {
     skillOverlap: Math.round(skillOverlap),
     experienceAlignment,
@@ -119,19 +166,56 @@ const buildReasons = (
   return reasons;
 };
 
+/**
+ * Build the set of skills a user holds, merging their manually-added skills
+ * with AI-extracted skills (from CV/notes analysis). Both are normalized,
+ * so "React.js" and "React" collapse to a single entry.
+ */
+const collectUserSkillSet = (
+  user: { skills?: string[]; extractedSkills?: string[] }
+): Set<string> =>
+  new Set(
+    normalizeSkills([
+      ...(user.skills ?? []),
+      ...(user.extractedSkills ?? []),
+    ])
+  );
+
+/**
+ * Match a job's required skills against a set of user skills.
+ * Uses normalized comparison so "React.js" matches "React", etc.
+ * Returns the canonical job skill names that matched.
+ */
+const matchJobSkills = (
+  jobRequiredSkills: string[],
+  userSkillSet: Set<string>
+): string[] => {
+  const matched: string[] = [];
+  for (const jobSkill of jobRequiredSkills) {
+    const normalizedJob = normalizeSkill(jobSkill);
+    // Check against every user skill using fuzzy matching
+    for (const userSkill of userSkillSet) {
+      if (skillsMatch(normalizedJob, userSkill)) {
+        matched.push(jobSkill); // keep original job skill name for display
+        break;
+      }
+    }
+  }
+  return matched;
+};
+
 const getRecommendedJobs = async (userId: string): Promise<IMatchResult[]> => {
   const user = await User.findById(userId);
   if (!user) {
     throw new AppError(404, "User not found");
   }
 
-  const userSkills = new Set(user.skills.map((s) => s.toLowerCase()));
+  const normalizedUserSkills = Array.from(collectUserSkillSet(user));
+  const userSkillSet = new Set(normalizedUserSkills);
   const jobs = await JobOpportunity.find({});
 
   const results: IMatchResult[] = jobs.map((job) => {
-    const matchedSkills = job.requiredSkills.filter((s) =>
-      userSkills.has(s.toLowerCase())
-    );
+    const matchedSkills = matchJobSkills(job.requiredSkills, userSkillSet);
     const skillOverlap =
       job.requiredSkills.length > 0
         ? (matchedSkills.length / job.requiredSkills.length) * 100
@@ -141,7 +225,8 @@ const getRecommendedJobs = async (userId: string): Promise<IMatchResult[]> => {
       user.experienceLevel,
       job.experienceLevel,
       user.preferredTrack,
-      job.track
+      job.track,
+      normalizedUserSkills
     );
     return {
       job,
@@ -160,30 +245,32 @@ const getRecommendedJobs = async (userId: string): Promise<IMatchResult[]> => {
   return results;
 };
 
+/**
+ * Find missing skills from a job and match them to learning resources.
+ * Normalizes skills so "PostgreSQL" resources appear for a "postgres" gap.
+ */
 const getResourcesForGaps = async (
   missingSkills: string[]
 ): Promise<ILearningLink[]> => {
   if (missingSkills.length === 0) return [];
 
-  const resources = await LearningResource.find({
-    relatedSkills: { $in: missingSkills },
-  });
+  // Fetch all resources — we'll match in memory since skill names vary
+  const resources = await LearningResource.find({});
 
-  return missingSkills.map((skill) => {
-    const skillLower = skill.toLowerCase();
-    return {
-      skill,
-      resources: resources
-        .filter((r) => r.relatedSkills.some((s) => s.toLowerCase() === skillLower))
-        .map((r) => ({
-          _id: r._id as Types.ObjectId,
-          title: r.title,
-          platform: r.platform,
-          url: r.url,
-          cost: r.cost,
-        })),
-    };
-  });
+  return missingSkills.map((skill) => ({
+    skill,
+    resources: resources
+      .filter((r) =>
+        r.relatedSkills.some((rs) => skillsMatch(skill, rs))
+      )
+      .map((r) => ({
+        _id: r._id as Types.ObjectId,
+        title: r.title,
+        platform: r.platform,
+        url: r.url,
+        cost: r.cost,
+      })),
+  }));
 };
 
 const getJobMatch = async (
@@ -200,12 +287,11 @@ const getJobMatch = async (
     throw new AppError(404, "Job not found");
   }
 
-  const userSkills = new Set(user.skills.map((s) => s.toLowerCase()));
-  const matchedSkills = job.requiredSkills.filter((s) =>
-    userSkills.has(s.toLowerCase())
-  );
+  const normalizedUserSkills = Array.from(collectUserSkillSet(user));
+  const userSkillSet = new Set(normalizedUserSkills);
+  const matchedSkills = matchJobSkills(job.requiredSkills, userSkillSet);
   const missingSkills = job.requiredSkills.filter(
-    (s) => !userSkills.has(s.toLowerCase())
+    (s) => !matchJobSkills([s], userSkillSet).length
   );
 
   const skillOverlap =
@@ -218,7 +304,8 @@ const getJobMatch = async (
     user.experienceLevel,
     job.experienceLevel,
     user.preferredTrack,
-    job.track
+    job.track,
+    normalizedUserSkills
   );
 
   const matchPercentage = computeMatchPercentage(breakdown);
@@ -253,19 +340,21 @@ const getRecommendedResources = async (
     throw new AppError(404, "User not found");
   }
 
-  const userSkills = new Set(user.skills.map((s) => s.toLowerCase()));
+  const normalizedUserSkills = Array.from(collectUserSkillSet(user));
+  const userSkillSet = new Set(normalizedUserSkills);
 
-  const gapSet = new Set<string>();
+  // Collect missing skills from top matches (normalized)
+  const missingSet = new Set<string>();
   for (const match of matches.slice(0, 10)) {
     for (const skill of match.job.requiredSkills) {
-      const lower = skill.toLowerCase();
-      if (!userSkills.has(lower)) {
-        gapSet.add(lower);
+      const normalized = normalizeSkill(skill);
+      if (!matchJobSkills([skill], userSkillSet).length) {
+        missingSet.add(normalized);
       }
     }
   }
 
-  if (gapSet.size === 0) return [];
+  if (missingSet.size === 0) return [];
 
   const resources = await LearningResource.find({});
 
@@ -273,7 +362,7 @@ const getRecommendedResources = async (
     .map((resource) => ({
       resource,
       matchedGaps: resource.relatedSkills.filter((s) =>
-        gapSet.has(s.toLowerCase())
+        Array.from(missingSet).some((gap) => skillsMatch(gap, s))
       ),
     }))
     .filter((r) => r.matchedGaps.length > 0)
